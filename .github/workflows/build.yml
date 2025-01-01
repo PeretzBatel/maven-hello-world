@@ -20,12 +20,8 @@ jobs:
         java-version: '11'
         distribution: 'zulu'
 
-    - name: Debug myapp directory
-      working-directory: ./myapp
-      run: ls -la
-
     - name: Update version
-      working-directory: ./myapp 
+      working-directory: ./myapp
       id: update-version
       run: |
         version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
@@ -34,10 +30,11 @@ jobs:
         new_version="$major.$minor.$((patch+1))"
         echo "New version: $new_version"
         mvn versions:set -DnewVersion=$new_version
+        mvn versions:commit
         echo "new_version=$new_version" >> $GITHUB_ENV
 
     - name: Build with Maven
-      working-directory: ./myapp 
+      working-directory: ./myapp
       run: mvn clean package
 
     - name: Build Docker image
@@ -53,3 +50,8 @@ jobs:
       run: |
         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
         docker push batelperetz/hello-world:$new_version
+
+    - name: Run Docker image
+      run: |
+        docker pull batelperetz/hello-world:$new_version
+        docker run --rm batelperetz/hello-world:$new_version
