@@ -24,14 +24,29 @@ jobs:
       working-directory: ./myapp
       id: update-version
       run: |
+        # Get the current version
         version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
         echo "Current version: $version"
+
+        # Split the version into major, minor, and patch
         IFS='.' read -r major minor patch <<< "$version"
+
+        # Increment the patch version
         new_version="$major.$minor.$((patch+1))"
         echo "New version: $new_version"
+
+        # Update the version in pom.xml
         mvn versions:set -DnewVersion=$new_version
         mvn versions:commit
+
+        # Export the new version to GitHub environment
         echo "new_version=$new_version" >> $GITHUB_ENV
+
+    - name: Verify version update
+      working-directory: ./myapp
+      run: |
+        echo "Checking updated pom.xml..."
+        grep "<version>" pom.xml
 
     - name: Build with Maven
       working-directory: ./myapp
