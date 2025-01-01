@@ -18,9 +18,16 @@ jobs:
       uses: actions/setup-java@v3
       with:
         java-version: '11'
-        distribution: 'zulu' 
+        distribution: 'zulu'
+
+    - name: Navigate to Maven project directory
+      working-directory: ./myapp 
+      run: |
+        pwd
+        ls -la
 
     - name: Update version
+      working-directory: ./myapp 
       id: update-version
       run: |
         version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
@@ -32,11 +39,12 @@ jobs:
         echo "new_version=$new_version" >> $GITHUB_ENV
 
     - name: Build with Maven
+      working-directory: ./myapp 
       run: mvn clean package
 
     - name: Build Docker image
       run: |
-        docker build -t batelperetz/hello-world:$new_version .
+        docker build -t batelperetz/hello-world:$new_version ./myapp
         echo "Docker image built: batelperetz/hello-world:$new_version"
 
     - name: Push Docker image
