@@ -24,39 +24,30 @@ jobs:
       working-directory: ./myapp
       id: update-version
       run: |
-        # Get the current version
         version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
         echo "Current version: $version"
 
-        # Split the version into major, minor, and patch
         IFS='.' read -r major minor patch <<< "$version"
-
-        # Increment the patch version
         new_version="$major.$minor.$((patch+1))"
         echo "New version: $new_version"
 
-        # Update the version in pom.xml
         mvn versions:set -DnewVersion=$new_version
         mvn versions:commit
 
-        # Export the new version to GitHub environment
         echo "new_version=$new_version" >> $GITHUB_ENV
 
-    - name: Verify version update
+    - name: Commit and push updated pom.xml
       working-directory: ./myapp
       run: |
-        echo "Checking updated pom.xml..."
-        grep "<version>" pom.xml
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add pom.xml
+        git commit -m "Update version to $new_version" || echo "No changes to commit"
+        git push
 
     - name: Build with Maven
       working-directory: ./myapp
       run: mvn clean package
-
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: myapp-jar
-        path: ./myapp/target/*.jar
 
     - name: Build Docker image
       working-directory: ./myapp
