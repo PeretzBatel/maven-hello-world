@@ -1,0 +1,46 @@
+name: Java Build and Dockerize
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+
+    - name: Update version
+      id: update-version
+      run: |
+        version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo "Current version: $version"
+        IFS='.' read -r major minor patch <<< "$version"
+        new_version="$major.$minor.$((patch+1))"
+        echo "New version: $new_version"
+        mvn versions:set -DnewVersion=$new_version
+        echo "new_version=$new_version" >> $GITHUB_ENV
+
+    - name: Build with Maven
+      run: mvn clean package
+
+    - name: Build Docker image
+      run: |
+        docker build -t batelperetz/hello-world:$new_version .
+        echo "Docker image built: batelperetz/hello-world:$new_version"
+
+    - name: Push Docker image
+      env:
+        DOCKER_USER: ${{ secrets.DOCKER_USER }}
+        DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
+      run: |
+        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+        docker push batelperetz/hello-world:$new_version
