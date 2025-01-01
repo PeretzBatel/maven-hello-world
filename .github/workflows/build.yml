@@ -20,11 +20,9 @@ jobs:
         java-version: '11'
         distribution: 'zulu'
 
-    - name: Navigate to Maven project directory
-      working-directory: ./myapp 
-      run: |
-        pwd
-        ls -la
+    - name: Debug myapp directory
+      working-directory: ./myapp
+      run: ls -la
 
     - name: Update version
       working-directory: ./myapp 
@@ -43,8 +41,9 @@ jobs:
       run: mvn clean package
 
     - name: Build Docker image
+      working-directory: ./myapp
       run: |
-        docker build -t batelperetz/hello-world:$new_version ./myapp
+        docker build -t batelperetz/hello-world:$new_version .
         echo "Docker image built: batelperetz/hello-world:$new_version"
 
     - name: Push Docker image
