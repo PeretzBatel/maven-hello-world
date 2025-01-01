@@ -37,6 +37,12 @@ jobs:
       working-directory: ./myapp
       run: mvn clean package
 
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: myapp-jar
+        path: ./myapp/target/*.jar
+
     - name: Build Docker image
       working-directory: ./myapp
       run: |
